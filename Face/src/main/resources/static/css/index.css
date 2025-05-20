@@ -1,0 +1,185 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #e6f7ff, #d9f2e6);
+}
+
+/* 侧边栏样式 */
+.sidebar {
+    position: fixed;
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    width: 220px;
+    /* 使用线性渐变设置浅荧光绿蓝背景 */
+    background: linear-gradient(135deg, #a3ffbd, #80e5ff);
+}
+
+/* 主内容区 */
+#content-wrapper {
+    margin-left: 220px;
+    padding: 20px;
+    min-height: calc(100vh - 56px);
+    transition: margin-left 0.3s;
+    /* 调整宽度，确保内容不会溢出 */
+    width: calc(100% - 220px);
+}
+
+/* 卡片样式 */
+.card {
+    height: 300px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border: none;
+    transition: transform 0.3s ease;
+}
+
+.text-body {
+    /*上下居中对齐*/
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 80px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-counter {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 10px 0;
+}
+
+/* 图表容器 */
+.chart-container {
+    height: 300px;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* iframe样式 */
+.page-iframe {
+    width: 100%;
+    height: calc(100vh - 200px);
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background: white;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        top: auto;
+    }
+
+    #content-wrapper {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .page-iframe {
+        height: 500px;
+    }
+}
+
+/* 顶部导航栏 */
+.navbar {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* 使用线性渐变设置浅荧光绿蓝黄背景 */
+    background: linear-gradient(135deg, #a3ffbd, #80e5ff, #fff3a3);
+    color: #2c3e50;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5); /* 添加白色半透明阴影 */
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: #2c3e50;
+}
+
+.nav-link {
+    color: #2c3e50;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+/* 侧边栏菜单项 */
+.list-group-item {
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    transition: all 0.3s ease;
+}
+
+.list-group-item:hover {
+    background-color: #f1f5f9;
+}
+
+.list-group-item.active {
+    /*具有科技感的颜色,荧光绿色 */
+    background: radial-gradient(circle, #39ff14, #00ffcc, #007bff);
+    color: #66a3ff;
+}
+
+.list-group-item i {
+    width: 20px;
+    text-align: center;
+}
+
+.mb-4 {
+    /*居中显示*/
+    text-align: center;
+}
+
+/* 用户中心模态框自定义样式 */
+#userCenterModal .modal-dialog {
+    max-width: 800px;
+}
+
+#userCenterModal .modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+#userCenterModal .modal-header {
+    background: linear-gradient(135deg, #a3ffbd, #80e5ff);
+    border-bottom: none;
+    border-radius: 15px 15px 0 0;
+    padding: 15px 20px;
+}
+
+#userCenterModal .modal-title {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+#userCenterModal .modal-body {
+    padding: 0;
+    height: 70vh;
+    overflow: hidden;
+}
+
+#userCenterModal iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0 0 15px 15px;
+}
+
+#userCenterModal .btn-close {
+    filter: brightness(0.6);
+}

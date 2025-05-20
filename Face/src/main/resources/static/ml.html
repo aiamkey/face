@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心脏病风险预测系统</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --primary-hover: #2980b9;
+            --success-color: #d4edda;
+            --success-text: #155724;
+            --danger-color: #f8d7da;
+            --danger-text: #721c24;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 15px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .result-container {
+            margin-top: 25px;
+        }
+
+        .result {
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 18px;
+            display: none;
+            margin-bottom: 15px;
+            animation: fadeIn 0.5s;
+        }
+
+        .no-risk {
+            background-color: var(--success-color);
+            color: var(--success-text);
+        }
+
+        .risk {
+            background-color: var(--danger-color);
+            color: var(--danger-text);
+        }
+
+        .loading {
+            text-align: center;
+            display: none;
+            margin: 20px 0;
+            font-size: 16px;
+            color: #6c757d;
+        }
+
+        .columns {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .column {
+            flex: 1;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-top: 5px;
+            font-size: 14px;
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .columns {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>心脏病风险预测系统</h1>
+
+    <div class="form-container">
+        <form id="prediction-form">
+            <div class="columns">
+                <div class="column">
+                    <div class="form-group">
+                        <label for="BMI">BMI指数</label>
+                        <input type="number" id="BMI" name="BMI" step="0.1" min="10" max="50" required>
+                        <div class="error-message" id="bmi-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Smoking">是否吸烟</label>
+                        <select id="Smoking" name="Smoking" required>
+                            <option value=0>否</option>
+                            <option value=1>是</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="AlcoholDrinking">是否饮酒</label>
+                        <select id="AlcoholDrinking" name="AlcoholDrinking" required>
+                            <option value=0>否</option>
+                            <option value=1>是</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Stroke">是否有中风史</label>
+                        <select id="Stroke" name="Stroke" required>
+                            <option value=0>否</option>
+                            <option value=1>是</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="PhysicalHealth">身体健康状况(0-30天)</label>
+                        <input type="number" id="PhysicalHealth" name="PhysicalHealth" min="0" max="30" required>
+                        <div class="error-message" id="physical-health-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="MentalHealth">心理健康状况(0-30天)</label>
+                        <input type="number" id="MentalHealth" name="MentalHealth" min="0" max="30" required>
+                        <div class="error-message" id="mental-health-error"></div>
+                    </div>
+                </div>
+
+                <div class="column">
+                    <div class="form-group">
+                        <label for="DiffWalking">行走困难</label>
+                        <select id="DiffWalking" name="DiffWalking" required>
+                            <option value=0>否</option>
+                            <option value=1>是</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Sex">性别</label>
+                        <select id="Sex" name="Sex" required>
+                            <option value=0>女</option>
+                            <option value=1>男</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="AgeCategory">年龄组</label>
+                        <select id="AgeCategory" name="AgeCategory" required>
+                            <option value=1>18-24岁</option>
+                            <option value=2>25-29岁</option>
+                            <option value=3>30-34岁</option>
+                            <option value=4>35-39岁</option>
+                            <option value=5>40-44岁</option>
+                            <option value=6>45-49岁</option>
+                            <option value=7>50-54岁</option>
+                            <option value=8>55-59岁</option>
+                            <option value=9>60-64岁</option>
+                            <option value=10>65-69岁</option>
+                            <option value=11>70-74岁</option>
+                            <option value=12>75-79岁</option>
+                            <option value=13>80岁及以上</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Race">种族</label>
+                        <select id="Race" name="Race" required>
+                            <option value=1>白人</option>
+                            <option value=2>黑人</option>
+                            <option value=3>亚裔</option>
+                            <option value=4>美洲原住民</option>
+                            <option value=5>其他</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Diabetic">糖尿病情况</label>
+                        <select id="Diabetic" name="Diabetic" required>
+                            <option value=0>无</option>
+                            <option value=1>是</option>
+                            <option value=2>妊娠期糖尿病</option>
+                            <option value=3>前驱糖尿病</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="columns">
+                <div class="column">
+                    <div class="form-group">
+                        <label for="PhysicalActivity">过去30天是否有运动</label>
+                        <select id="PhysicalActivity" name="PhysicalActivity" required>
+                            <option value=0>否</option>
+                            <option value=1>是</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="GenHealth">总体健康状况</label>
+                        <select id="GenHealth" name="GenHealth" required>
+                            <option value=1>优秀</option>
+                            <option value=2>很好</option>
+                            <option value=3>好</option>
+                            <option value=4>一般</option>
+                            <option value=5>差</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="column">
+                    <div class="form-group">
+                        <label for="SleepTime">平均睡眠时间(小时)</label>
+                        <input type="number" id="SleepTime" name="SleepTime" min="1" max="24" required>
+                        <div class="error-message" id="sleep-time-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Asthma">是否有哮喘</label>
+                        <select id="Asthma" name="Asthma" required>
+                            <option value=0>否</option>
+                            <option value=1>是</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="column">
+                    <div class="form-group">
+                        <label for="KidneyDisease">是否有肾脏疾病</label>
+                        <select id="KidneyDisease" name="KidneyDisease" required>
+                            <option value=0>否</option>
+                            <option value=1>是</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="SkinCancer">是否有皮肤癌</label>
+                        <select id="SkinCancer" name="SkinCancer" required>
+                            <option value=0>否</option>
+                            <option value=1>是</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn">预测心脏病风险</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在分析数据，请稍候...</p>
+        </div>
+
+        <div class="result-container">
+            <div class="result no-risk" id="result-no">
+                <h3>预测结果：无心脏病风险</h3>
+                <p>根据您的健康数据，目前没有检测到心脏病风险。</p>
+            </div>
+
+            <div class="result risk" id="result-yes">
+                <h3>预测结果：有心脏病风险</h3>
+                <p>根据您的健康数据，检测到可能存在心脏病风险，建议尽快就医检查！</p>
+            </div>
+
+            <div class="result risk" id="result-error" style="display: none;">
+                <h3>预测失败</h3>
+                <p id="error-message"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('prediction-form');
+            const loading = document.getElementById('loading');
+            const resultNo = document.getElementById('result-no');
+            const resultYes = document.getElementById('result-yes');
+            const resultError = document.getElementById('result-error');
+            const errorMessage = document.getElementById('error-message');
+            const submitBtn = document.getElementById('submit-btn');
+
+            // 验证数字输入
+            function validateNumberInput(inputId, min, max, errorId) {
+                const input = document.getElementById(inputId);
+                const error = document.getElementById(errorId);
+                const value = parseFloat(input.value);
+
+                if (isNaN(value) || value < min || value > max) {
+                    error.textContent = `请输入${min}到${max}之间的有效数字`;
+                    error.style.display = 'block';
+                    return false;
+                } else {
+                    error.style.display = 'none';
+                    return true;
+                }
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                // 验证输入
+                const isBMIValid = validateNumberInput('BMI', 10, 50, 'bmi-error');
+                const isPhysicalHealthValid = validateNumberInput('PhysicalHealth', 0, 30, 'physical-health-error');
+                const isMentalHealthValid = validateNumberInput('MentalHealth', 0, 30, 'mental-health-error');
+                const isSleepTimeValid = validateNumberInput('SleepTime', 1, 24, 'sleep-time-error');
+
+                if (!isBMIValid || !isPhysicalHealthValid || !isMentalHealthValid || !isSleepTimeValid) {
+                    return;
+                }
+
+                // 重置结果显示
+                resultNo.style.display = 'none';
+                resultYes.style.display = 'none';
+                resultError.style.display = 'none';
+
+                // 显示加载状态
+                loading.style.display = 'block';
+                submitBtn.disabled = true;
+
+                try {
+                    // 收集表单数据
+                    const formData = {};
+                    const formElements = form.elements;
+
+                    for (let element of formElements) {
+                        if (element.name) {
+                            // 确保数值字段转换为数字
+                            formData[element.name] = ['BMI', 'PhysicalHealth', 'MentalHealth', 'SleepTime'].includes(element.name)
+                                ? parseFloat(element.value)
+                                : element.value;
+                        }
+                    }
+
+                    // 发送预测请求
+                    const response = await fetch('http://127.0.0.1:5000/predict', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`请求失败: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    // 显示结果
+                    if (data.prediction === 0) {
+                        resultNo.style.display = 'block';
+                    } else {
+                        resultYes.style.display = 'block';
+                    }
+
+                } catch (error) {
+                    console.error('预测错误:', error);
+                    errorMessage.textContent = error.message || '发生未知错误，请稍后再试';
+                    resultError.style.display = 'block';
+                } finally {
+                    loading.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            });
+
+            // 输入实时验证
+            document.getElementById('BMI').addEventListener('input', () => {
+                validateNumberInput('BMI', 10, 50, 'bmi-error');
+            });
+
+            document.getElementById('PhysicalHealth').addEventListener('input', () => {
+                validateNumberInput('PhysicalHealth', 0, 30, 'physical-health-error');
+            });
+
+            document.getElementById('MentalHealth').addEventListener('input', () => {
+                validateNumberInput('MentalHealth', 0, 30, 'mental-health-error');
+            });
+
+            document.getElementById('SleepTime').addEventListener('input', () => {
+                validateNumberInput('SleepTime', 1, 24, 'sleep-time-error');
+            });
+        });
+    </script>
+</body>
+</html>

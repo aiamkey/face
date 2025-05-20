@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>AI</title>
+    <link rel="icon" href="image/index.png" type="image/x-icon"/>
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    />
+    <link
+            href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
+            rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/chat.css">
+</head>
+<body>
+<div id="app" class="container-fluid d-flex flex-column">
+    <div id="chat">
+        <div v-for="(msg, index) in messages" :key="index" :class="['message', msg.type]">
+            <template v-if="msg.type === 'question'">
+                <div class="text">{{ msg.text }}</div>
+            </template>
+            <template v-else>
+                <img src="image/index.png" class="avatar" alt="Avatar"/>
+                <div class="text">{{ msg.text }}</div>
+            </template>
+        </div>
+    </div>
+
+    <!-- 加载动画，仅在获取数据时显示 -->
+    <div v-if="loading" class="d-flex align-items-center justify-content-center">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- 输入框及发送按钮 -->
+    <form id="question-form" @submit.prevent="sendQuestion">
+        <input
+                type="text"
+                id="question"
+                v-model="newQuestion"
+                class="form-control"
+                placeholder="请输入您的问题"
+                autocomplete="off"
+        />
+        <button type="submit">
+            <img src="https://img.icons8.com/ios/50/ffffff/sent.png" alt="Send"/>
+        </button>
+    </form>
+</div>
+
+<script src="/js/vue.global.prod.js"></script>
+<script>
+    const {createApp, ref, onMounted} = Vue;
+
+class AiRequest {
+    constructor(id, prompt) {
+        this.id = id;
+        this.prompt = prompt;
+
+    }
+};
+
+createApp({
+    setup() {
+        const messages = ref([]);
+        const newQuestion = ref('');
+        const loading = ref(false);
+        const id = ref(Date.now());
+
+        // 从本地存储中加载历史记录
+        onMounted(() => {
+            const saved = localStorage.getItem('chatHistory');
+            if (saved) {
+                messages.value = JSON.parse(saved);
+            }
+            // 如果没有历史记录，则显示初始问候
+            if (messages.value.length === 0) {
+                addAnswer("您好");
+            }
+            scrollToBottom();
+        });
+
+        // 保存聊天记录
+        function saveChatHistory() {
+            localStorage.setItem('chatHistory', JSON.stringify(messages.value));
+        }
+
+
+        // 添加用户问题
+        function addQuestion(text) {
+            messages.value.push({type: 'question', text});
+            saveChatHistory();
+            scrollToBottom();
+        }
+
+        // 添加回答
+        function addAnswer(text) {
+            messages.value.push({type: 'answer', text});
+            saveChatHistory();
+            scrollToBottom();
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            setTimeout(() => {
+                const chatDiv = document.getElementById('chat');
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+            }, 0);
+        }
+
+        // 发送问题并获取回答（字逐渐显示）
+        async function sendQuestion() {
+            const question = newQuestion.value.trim();
+            if (!question) return;
+            addQuestion(question);
+            newQuestion.value = '';
+            loading.value = true;
+
+            // 先插入一个空的回答项，用于逐字显示
+            const answerIndex = messages.value.length;
+            messages.value.push({type: 'answer', text: ''});
+            scrollToBottom();
+
+
+            try {
+                const userId = localStorage.getItem('id')
+                const request = new AiRequest(userId, question);
+                const response = await fetch('/api/users/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(request)
+                });
+
+                const data = await response.json();
+
+                if (data.code === 200) {
+
+                    for (let char of data.response) {
+                        messages.value[answerIndex].text += char;
+                        await new Promise((resolve) => setTimeout(resolve, 50));
+                        scrollToBottom();
+                    }
+                } else {
+                    addAnswer("抱歉，获取回答时出现问题。");
+                }
+                saveChatHistory();
+            } catch (error) {
+                console.error("Error:", error);
+            } finally {
+                loading.value = false;
+            }
+        }
+
+        return {messages, newQuestion, sendQuestion, loading};
+    }
+}).mount('#app');
+</script>
+</body>
+</html>

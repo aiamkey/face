@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat History Pagination</title>
+    <link rel="stylesheet" href="/css/history.css">
+</head>
+
+<body>
+<div id="chat-history"></div>
+<div class="pagination-controls">
+    <div class="pagination-info">Showing <span id="page-start">0</span>-<span id="page-end">0</span> of <span
+            id="total-items">0</span> items</div>
+    <div>
+        <button id="prev-page" disabled>Previous</button>
+        <button id="next-page">Next</button>
+    </div>
+</div>
+
+<script>
+    // 每页显示的记录数
+    const itemsPerPage = 5;
+    // 当前页码
+    let currentPage = 1;
+    // 总记录数
+    let totalItems = 0;
+    // 存储所有聊天记录
+    let allChatHistory = [];
+
+    // 监听父窗口发来的消息
+    window.addEventListener('message',  function(event) {
+        console.log(' 收到消息:', event.data);   // 调试用
+        if (event.data  === 'show') {
+            console.log(' 开始加载聊天记录...'); // 调试用
+            loadChatHistory();
+        }
+    });
+
+    // 获取聊天记录的函数
+    async function getChatHistory() {
+        const userId = localStorage.getItem('id');
+        console.log("User  ID:", userId);
+        if (!userId) {
+            throw new Error('User ID not found');
+        }
+
+        try {
+            // 构建请求 URL
+            const response = await fetch(`/api/users/chatHistory?userId=${userId}`);
+
+            if (!response.ok)  {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // 解析响应数据
+            const result = await response.json();
+            console.log("API  Response:", result);
+
+            if (result.code  !== 200) {
+                throw new Error(result.msg  || 'Failed to fetch chat history');
+            }
+
+            allChatHistory = result.data  || [];
+            totalItems = allChatHistory.length;
+            return allChatHistory;
+        } catch (error) {
+            console.error('Error  fetching chat history:', error);
+            alert('Error loading chat history: ' + error.message);
+            return [];
+        }
+    }
+
+    // 渲染聊天记录的函数
+    function renderChatHistory() {
+        const chatHistoryDiv = document.getElementById('chat-history');
+        chatHistoryDiv.innerHTML  = '';
+
+        // 计算当前页的数据范围
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex  + itemsPerPage, totalItems);
+        const currentPageData = allChatHistory.slice(startIndex,  endIndex);
+
+        // 更新分页信息
+        document.getElementById('page-start').textContent  = startIndex + 1;
+        document.getElementById('page-end').textContent  = endIndex;
+        document.getElementById('total-items').textContent  = totalItems;
+
+        if (currentPageData.length  === 0) {
+            chatHistoryDiv.innerHTML  = '<p>你还没有对话记录,快去与AI对话吧🙂</p>';
+            return;
+        }
+
+        currentPageData.forEach(item  => {
+            const chatItem = document.createElement('div');
+            chatItem.className  = 'chat-item';
+
+            const prompt = document.createElement('div');
+            prompt.className  = 'chat-prompt';
+            prompt.textContent  = `You: ${item.prompt  || 'N/A'}`;
+
+            const response = document.createElement('div');
+            response.className  = 'chat-response';
+            // 保留换行和格式
+            response.innerHTML  = formatResponse(item.response  || 'N/A');
+
+            const time = document.createElement('div');
+            time.className  = 'chat-time';
+            time.textContent  = formatTimestamp(item.timestamp);
+
+            chatItem.appendChild(prompt);
+            chatItem.appendChild(response);
+            chatItem.appendChild(time);
+            chatHistoryDiv.appendChild(chatItem);
+        });
+    }
+
+    // 格式化响应内容，保留换行和格式
+    function formatResponse(text) {
+        return text.replace(/\n/g,  '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+    }
+
+    // 格式化时间戳
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return 'N/A';
+        const date = new Date(timestamp);
+        return date.toLocaleString();
+    }
+
+    // 更新分页按钮状态的函数
+    function updatePaginationButtons() {
+        const prevPageButton = document.getElementById('prev-page');
+        const nextPageButton = document.getElementById('next-page');
+
+        // 第一页时禁用上一页按钮
+        prevPageButton.disabled  = currentPage === 1;
+        // 最后一页时禁用下一页按钮
+        nextPageButton.disabled  = currentPage * itemsPerPage >= totalItems;
+    }
+
+    // 加载聊天记录的函数
+    async function loadChatHistory() {
+        try {
+            // 首次加载时获取所有数据
+            if (allChatHistory.length  === 0) {
+                await getChatHistory();
+            }
+            renderChatHistory();
+            updatePaginationButtons();
+        } catch (error) {
+            console.error('Error  in loadChatHistory:', error);
+            // 显示错误信息给用户
+            const chatHistoryDiv = document.getElementById('chat-history');
+            chatHistoryDiv.innerHTML  = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 加载聊天记录失败: ${error.message}
+                </div>
+            `;
+        }
+    }
+
+    // 上一页按钮点击事件处理函数
+    document.getElementById('prev-page').addEventListener('click',  () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderChatHistory();
+            updatePaginationButtons();
+            window.scrollTo(0,  0);
+        }
+    });
+
+    // 下一页按钮点击事件处理函数
+    document.getElementById('next-page').addEventListener('click',  () => {
+        if (currentPage * itemsPerPage < totalItems) {
+            currentPage++;
+            renderChatHistory();
+            updatePaginationButtons();
+            window.scrollTo(0,  0);
+        }
+    });
+
+    // 页面加载时只初始化分页按钮
+    document.addEventListener('DOMContentLoaded',  function() {
+        updatePaginationButtons();
+    });
+</script>
+</body>
+</html>
